@@ -1,0 +1,17 @@
+{
+  "name": "escrow-jns",
+  "description": "an example implementation of escrow for JNS peer-to-peer exchange",
+  "version": "0.0.1",
+  "homepage": "https://github.com/Jouleverse/escrow-jns",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "angular": "~1.8.3",
+    "angular-route": "~1.8.3",
+    "angular-loader": "~1.8.3",
+    "angular-mocks": "~1.8.3",
+    "html5-boilerplate": "~8.0.0",
+    "web3": "~4.0.1",
+    "angular-bootstrap": "~2.5.0"
+  }
+}

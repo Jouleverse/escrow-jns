@@ -26,13 +26,13 @@ contract Escrow is IERC721Receiver {
     enum State { Inactive, Created, Locked }
     // the structure of a transaction
     struct Transaction {
-        address token; // token contract address
-        uint256 tokenId; // token id to be transacted
+        State state; // the state has a default value `State.Inactive`
+		address arbitrator;
         address seller;
         address buyer;
-		uint offer;
-		address arbitrator;
-        State state; // the state has a default value `State.Inactive`
+        address token; // token contract address
+        uint256 tokenId; // token id to be transacted
+		bytes32 message;
     }
     // transactions that initiated by a token buyer
     // A buyer can have only one active transaction at once
@@ -59,19 +59,19 @@ contract Escrow is IERC721Receiver {
     event Confirmed(address token, uint256 tokenId);
 
     // Buyer (anyone) can initiate a transaction with an offer
-	// _offer can be any number agreed between the two sides
-    function create(address _seller, address _token, uint256 _tokenId, uint _offer, address _arbitrator) public
+	// _message can be any bytes (encrypted by seller's pub key) for seller's info
+    function create(address _arbitrator, address _token, uint256 _tokenId, bytes32 _message) public
     {
         require(State.Inactive == transactions[msg.sender].state, "State is not Inactive");
 
         Transaction memory txn = Transaction({
+            state: State.Created,
+			arbitrator: _arbitrator,
+            seller: IERC721(_token).ownerOf(_tokenId),
+            buyer: msg.sender,
             token: _token,
             tokenId: _tokenId,
-            seller: _seller,
-            buyer: msg.sender,
-			offer: _offer,
-			arbitrator: _arbitrator,
-            state: State.Created
+			message: _message
         });
 
         transactions[msg.sender] = txn;
@@ -146,7 +146,7 @@ contract Escrow is IERC721Receiver {
         uint256 tokenId = transactions[_buyer].tokenId;
 
         emit Confirmed(token, tokenId);
-        transactions[_buyer].state = State.Inactive;
+        transactions[_buyer].state = State.Inactive; //FIXME? plz be aware that _seller is not reset correctly
 
 		IERC721(token).safeTransferFrom(address(this), _buyer, tokenId);
     }

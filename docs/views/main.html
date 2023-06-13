@@ -1,10 +1,115 @@
 <div class="container" style="padding-top: 50px;">
 
-	<h1 style="text-align:center;">由智能合约担保的点对点转让JNS域名</h1>
+	<h1 style="text-align:center;">由智能合约托管的点对点转让JNS域名</h1>
+	<hr />
 
 	<div style="text-align:center; margin-top: 30px;">
-		<h3>JNS域名：<img height="32px" src="{{ jnsInfo.logo }}"></img></h3>
-		<h5>当前持有人：{{ jnsInfo.ownerJNSId }} ({{ jnsInfo.ownerAddress }})</h5>
+		<div data-ng-if="jnsInfo == undefined && offerInfo !== undefined">
+			<h5><span style="word-break:break-all">链地址：{{ offerId }}</span></h5>
+			<p>👉👉👉该地址名下没有转让邀约信息！👈👈👈</p>
+			<hr />
+		</div>
+		<div data-ng-if="jnsInfo !== undefined && offerInfo !== undefined">
+			<h3>JNS域名：<img height="32px" src="{{ jnsInfo.logo }}"></img></h3>
+			<!--p>token id：{{ jnsInfo.tokenId }}</p>
+			<p>token owner：{{ jnsInfo.ownerJNSId }} ({{ jnsInfo.ownerAddress }})</p-->
+			<hr/>
+			<p>👇👇👇对该JNS域名的转让邀约信息：👇👇👇</p>
+			<table class="table-bordered" width="100%">
+				<tr>
+					<th></th>
+					<th class="text-center">被邀约人</th>
+					<th class="text-center">托管合约</th>
+					<th class="text-center">邀约人</th>
+				</tr>
+				<tr>
+					<td>地址</td>
+					<td class="text-center small" style="word-break:break-all">{{offerInfo.seller}}</td>
+					<td class="text-center small" style="word-break:break-all">{{ESCROW_CONTRACT_ADDRESS}}</td>
+					<td class="text-center small" style="word-break:break-all">{{offerInfo.buyerName + ' ' + offerInfo.buyer}}</td>
+				</tr>
+				<tr>
+					<td>资产</td>
+					<td class="text-center small">
+						<span data-ng-if="jns_location == 'SELLER'">
+							<img height="16px" src="{{ jnsInfo.logo }}"></img>
+						</span>
+					</td>
+					<td class="text-center small">
+						<span data-ng-if="jns_location == 'ESCROW'">
+							<img height="16px" src="{{ jnsInfo.logo }}"></img>
+						</span>
+					</td>
+					<td class="text-center small">
+						<span data-ng-if="jns_location == 'BUYER'">
+							<img height="16px" src="{{ jnsInfo.logo }}"></img>
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<td>状态</td>
+					<td class="text-center small">
+						<span data-ng-if="offerInfo.state == 1 && jns_location == 'SELLER'">
+							等待接受邀约
+						</span>
+					</td>
+					<td class="text-center small">
+						<span data-ng-if="offerInfo.state == 2">
+							托管中
+						</span>
+						<span data-ng-if="jns_location == 'ESCROW' && offerInfo.state != 2">
+							托管中（他人邀约）
+						</span>
+					</td>
+					<td class="text-center small">
+						<span data-ng-if="offerInfo.state == 0 && offerInfo.seller !== ZERO_ADDRESS">
+							未邀约
+						</span>
+					</td>
+				</tr>
+				<tr>
+					<td>操作</td>
+					<td class="text-center small">
+						<span data-ng-if="jnsId !== undefined">
+							<span data-ng-if="offerInfo.state == 1">
+								<a href="#!/offer/{{offerInfo.buyer}}">邀约链接</a>
+							</span>
+						</span>
+						<span data-ng-if="offerId !== undefined">
+							<span data-ng-if="offerInfo.state == 1 && jnsInfo.spenderAddress == ZERO_ADDRESS && jns_location == 'SELLER'">
+								<input type="button" class="btn btn-warning" ng-click="approve(jnsInfo.tokenId)" value="授权合约托管"></input>
+							</span>
+							<span data-ng-if="offerInfo.state == 1 && jnsInfo.spenderAddress != ZERO_ADDRESS && jns_location == 'SELLER'">
+								<input type="button" class="btn btn-warning" ng-click="acceptOffer(offerInfo)" value="接受邀约"></input>
+							</span>
+							<span data-ng-if="offerInfo.state == 2">
+								<input type="button" class="btn btn-warning" ng-click="confirmOffer(offerInfo)" value="确认发货"></input>
+							</span>
+						</span>
+					</td>
+					<td class="text-center small"></td>
+					<td class="text-center small">
+						<span data-ng-if="offerInfo.state == 0 && offerInfo.buyer.toLowerCase() != offerInfo.seller.toLowerCase()">
+							<input type="button" class="btn btn-primary" ng-click="makeOffer(jnsInfo.tokenId)" value="发起邀约"></input>
+						</span>
+						<span data-ng-if="offerInfo.state == 0 && offerInfo.buyer.toLowerCase() == offerInfo.seller.toLowerCase() && offerInfo.seller !== ZERO_ADDRESS">
+							不能向自己发起邀约
+						</span>
+					</td>
+				</tr>
+			</table>
+			<p></p>	
+
+			<hr />
+
+			<p><b>见证人</b>：<span class="small">{{ offerInfo.arbitrator }}</span></p>
+			<p>见证人联系方式：</p>
+			<p><img width="256px" src="/images/arbitrator.png"></img></p>
+
+			<hr />
+		</div>
+
+
 	</div>
 
 	<div style="text-align:center; margin-top: 30px;">
@@ -16,7 +121,7 @@
 
 	<div style="text-align:center;margin-top:30px">
 		<div><h5>👇👇👇没有找到区块链网络？👇👇👇</h5></div>
-		<div><input type="button" class="btn btn-primary" onclick="switchNetwork()" value="点此一键添加Jouleverse Mainnet"></input></div>
+		<div><input type="button" class="btn btn-secondary" onclick="switchNetwork()" value="点此一键添加Jouleverse Mainnet"></input></div>
 	</div>
 </div>
 

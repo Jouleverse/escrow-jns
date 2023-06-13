@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html lang="en" ng-app="EscrowJNS" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="EscrowJNS" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="EscrowJNS" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en" ng-app="EscrowJNS" class="no-js"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Escrow JNS</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="mirror/bootstrap/3.3.5/css/bootstrap.min.css">
+  <script src="mirror/cdn.jsdelivr.net/npm/web3@4.0.1/dist/web3.min.js"></script>
+
+	<script>
+		const PREFIX = '#!'; //fix for angular 1.6+ (useHtml5mode(false) first)
+
+		// global helpers
+		function dialogShowTxt(title, content) {
+			$("#warning-title").text(title);
+			$("#warning-content").text(content);
+			$('#dialog-warning').modal({keyboard:true, backdrop:true});
+			$('#dialog-warning').modal('show');
+		}
+
+		function dialogShowHtml(title, content) {
+			$("#warning-title").text(title);
+			$("#warning-content").html(content);
+			$('#dialog-warning').modal({keyboard:true, backdrop:true});
+			$('#dialog-warning').modal('show');
+		}
+
+		function dialogModalShowTxt(title, content) {
+			$("#warning-title").text(title);
+			$("#warning-content").text(content);
+			$('#dialog-warning').modal({keyboard:false, backdrop:'static'});
+			$('#dialog-warning').modal('show');
+		}
+
+		// callback generator for web3js sending tx
+		// usage: contract.methods.aaa(params).send({from: bbb}, handlerShowTx(DIALOG_TITLE)).then(handlerShowRct(DIALOG_TITLE);
+		function handlerShowTx(DIALOG_TITLE) {
+			return (err, txHash) => {
+				if (!err) {
+					dialogShowTxt(DIALOG_TITLE, '上链请求已提交（约5-15s确认），tx哈希值：' + txHash + ' 请稍等...');
+					// TODO Communicate with relay (given txHash) for a confirmation or an invoice for the user to pay.
+					// some codes...
+				} else {
+					dialogShowTxt(DIALOG_TITLE, '出错啦：' + err.message);
+				}
+			}
+		}
+		//dialogShowHtml(DIALOG_TITLE, '<p>已发送，tx哈希值：</p><p><a href="/#/tx/' + txHash + '">' + txHash + '</a></p><p>请等待上链交易完成后刷新页面数据，大约需要几秒到十几秒的时间</p>'); // here we still have a trivial bug: dialog will not be closed automatically when click on the txhash, and the tx page will not be refreshed.
+		
+		function handlerShowRct(DIALOG_TITLE) {
+			return (receipt) => {
+				dialogShowTxt(DIALOG_TITLE, '上链成功！');
+			}
+		}
+
+		// global vars
+		var __joule_networks = {
+			'0xe52': 'Joule Mainnet', // 3666
+			'0xf30': 'Joule Testnet', // 3888
+		};
+		var __chainId, __accounts;
+
+		function showHideConnect(chainId, accounts) {
+			if (chainId) { // update chainId
+				console.log('update __chainId: from ', __chainId, ' to ', chainId);
+				__chainId = chainId;
+			}
+
+			if (accounts) { // update accounts
+				console.log('update __accounts: from ', __accounts, ' to ', accounts);
+				__accounts = accounts;
+			}
+
+			if (__chainId) { // 有网络
+				var i = Object.keys(__joule_networks).indexOf(__chainId);
+				if (i != -1) { // 3666 or 3888 已知网络
+					$("#connNet")[0].innerHTML = '<img height="24px" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTEuNzg0IDUxMS43ODQiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDUxMS43ODQgNTExLjc4NCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+PHBhdGggc3R5bGU9ImZpbGw6I2ZkOTgwOCIgZD0ibTQ3My41MyA1OC42MjUtNjAuNTg3IDE1Mi43NDdjLTcuNjggMTcuOTItMTguNzczIDMzLjI4LTMzLjI4IDQ1LjIyN3YxNS4zNmMyLjU2LS44NTMgNS4xMi0yLjU2IDcuNjgtMy40MTMgMjMuMDQtMTEuOTQ3IDQwLjk2LTMzLjI4IDUwLjM0Ny01Ny4xNzNsNjEuNDQtMTUyLjc0N2gtMjUuNnoiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiLz48cGF0aCBzdHlsZT0iZmlsbDojZmZkZDA5IiBkPSJtMzc0LjU0NCA1OC42MjUtMzQuMTMzIDUxLjJoLTE3LjA2N3YzNC4xMzNoMzQuMTMzdjEyOGMyLjU2LS44NTMgNS4xMi0yLjU2IDcuNjgtMy40MTMgMjMuMDQtMTEuOTQ3IDQwLjk2LTMzLjI4IDUwLjM0Ny01Ny4xNzNsNjEuNDQtMTUyLjc0N2gtMTAyLjR6bS0yMjEuODY3IDg1LjMzNGgzNC4xMzN2LTM0LjEzM2gtMTcuMDY3bC0zNC4xMzMtNTEuMkgzMy4yMWw2MC41ODcgMTUyLjc0N2M5LjM4NyAyNC43NDcgMjcuMzA3IDQ1LjIyNyA1MC4zNDcgNTcuMTczIDIuNTYgMS43MDcgNS4xMiAyLjU2IDcuNjggMy40MTN2LTEyOGguODUzeiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMSAxKSIvPjxwYXRoIHN0eWxlPSJmaWxsOiNmY2MzMDkiIGQ9Im0yNTUuMDc3IDQ1MS4xNTktMjUuNi0yNy4zMDdjLTcwLjgyNy03NS4wOTMtMTEwLjkzMy0xNzUuNzg3LTExMC45MzMtMjc5Ljg5M2wxMzYuNTMzLTg1LjMzMyAxMzYuNTMzIDg1LjMzM2MwIDEwNC4xMDctNDAuMTA3IDIwMy45NDctMTEwLjkzMyAyNzkuODkzbC0yNS42IDI3LjMwN3oiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiLz48cGF0aCBzdHlsZT0iZmlsbDojZmZkZDA5IiBkPSJNMjU0LjIyNCA0MDAuODEyYy02MS40NC02NC44NTMtOTcuMjgtMTQ5LjMzMy0xMDEuNTQ3LTIzOC4wOGwxMDIuNC02My4xNDcgMTAxLjU0NyA2NGMtNC4yNjcgODguNzQ3LTQwLjEwNyAxNzMuMjI3LTEwMS41NDcgMjM4LjA4aC0uODUzdi0uODUzeiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMSAxKSIvPjxwYXRoIHN0eWxlPSJmaWxsOiNmZmYiIGQ9Ik05My43OTcgMjExLjM3MiAzMy4yMSA1OC42MjVINy42MWw2MC41ODcgMTUyLjc0N2M5LjM4NyAyNC43NDcgMjcuMzA3IDQ1LjIyNyA1MC4zNDcgNTcuMTczIDIuNTYgMS43MDcgNS4xMiAyLjU2IDcuNjggMy40MTN2LTE1LjM2Yy0xMy42NTQtMTEuOTQ2LTI0Ljc0Ny0yNy4zMDYtMzIuNDI3LTQ1LjIyNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMSAxKSIvPjxwYXRoIGQ9Ik02OC4zNDQgMTAyLjI5MmgtNDYuMDhjLTUuMTIgMC04LjUzMy0zLjQxMy04LjUzMy04LjUzMyAwLTUuMTIgMy40MTMtOC41MzMgOC41MzMtOC41MzNoNDYuMDhjNS4xMiAwIDguNTMzIDMuNDEzIDguNTMzIDguNTMzIDAgNS4xMi0zLjQxMyA4LjUzMy04LjUzMyA4LjUzM3ptOC41MzMgMzQuMTMzaC00MC45NmMtNS4xMiAwLTguNTMzLTMuNDEzLTguNTMzLTguNTMzIDAtNS4xMiAzLjQxMy04LjUzMyA4LjUzMy04LjUzM2g0MC45NmM1LjEyIDAgOC41MzMgMy40MTMgOC41MzMgOC41MzMgMCA1LjEyLTMuNDEzIDguNTMzLTguNTMzIDguNTMzem0xNy4wNjcgMzQuMTM0SDQ5LjU3Yy01LjEyIDAtOC41MzMtMy40MTMtOC41MzMtOC41MzNzMy40MTMtOC41MzMgOC41MzMtOC41MzNoNDQuMzczYzUuMTIgMCA4LjUzMyAzLjQxMyA4LjUzMyA4LjUzM3MtMy40MTIgOC41MzMtOC41MzIgOC41MzN6bTM5NS45NDYtNjguMjY3aC00Ni4wOGMtNS4xMiAwLTguNTMzLTMuNDEzLTguNTMzLTguNTMzIDAtNS4xMiAzLjQxMy04LjUzMyA4LjUzMy04LjUzM2g0Ni4wOGM1LjEyIDAgOC41MzMgMy40MTMgOC41MzMgOC41MzMuMDAxIDUuMTItMy40MTMgOC41MzMtOC41MzMgOC41MzN6bS0xMy42NTMgMzQuMTMzaC00MC45NmMtNS4xMiAwLTguNTMzLTMuNDEzLTguNTMzLTguNTMzIDAtNS4xMiAzLjQxMy04LjUzMyA4LjUzMy04LjUzM2g0MC45NmM1LjEyIDAgOC41MzMgMy40MTMgOC41MzMgOC41MzMgMCA1LjEyLTMuNDEzIDguNTMzLTguNTMzIDguNTMzem0tMTMuNjUzIDM0LjEzNEg0MTguMjFjLTUuMTIgMC04LjUzMy0zLjQxMy04LjUzMy04LjUzM3MzLjQxMy04LjUzMyA4LjUzMy04LjUzM2g0NC4zNzNjNS4xMiAwIDguNTMzIDMuNDEzIDguNTMzIDguNTMzcy0zLjQxMiA4LjUzMy04LjUzMiA4LjUzM3pNMjU2LjA3NyA0NjAuNjkyYy0yLjU2IDAtNC4yNjctLjg1My01Ljk3My0yLjU2bC0yNS42LTI3LjMwN2MtMTAuMjQtMTAuMjQtMTkuNjI3LTIxLjMzMy0yOC4xNi0zMy4yOC0yLjU2LTMuNDEzLTEuNzA3LTkuMzg3IDEuNzA3LTExLjk0NyAzLjQxMy0yLjU2IDkuMzg3LTEuNzA3IDExLjk0NyAxLjcwNyA4LjUzMyAxMS4wOTMgMTcuOTIgMjIuMTg3IDI3LjMwNyAzMi40MjdsMTguNzczIDIwLjQ4IDE4Ljc3My0yMC40OGM2OS4xMi03My4zODcgMTA3LjUyLTE2OC45NiAxMDguMzczLTI2OS42NTNMMjU2LjA3NyA2OS44NjVsLTEyOCA4MC4yMTNjLjg1MyA2NS43MDcgMTcuOTIgMTMxLjQxMyA1MC4zNDcgMTg5LjQ0IDIuNTYgNC4yNjcuODUzIDkuMzg3LTMuNDEzIDExLjk0Ny00LjI2NyAyLjU2LTkuMzg3Ljg1My0xMS45NDctMy40MTMtMzQuMTMzLTYyLjI5My01Mi4wNTMtMTMyLjI2Ny01Mi4wNTMtMjAzLjA5MyAwLTIuNTYgMS43MDctNS45NzMgNC4yNjctNi44MjdMMjUxLjgxIDUyLjc5OWMyLjU2LTEuNzA3IDUuOTczLTEuNzA3IDkuMzg3IDBsMTM2LjUzMyA4NS4zMzNjMS43MDcgMS43MDcgMy40MTMgNC4yNjcgMy40MTMgNi44MjcgMCAxMDYuNjY3LTQwLjEwNyAyMDguMjEzLTExMy40OTMgMjg1Ljg2N2wtMjUuNiAyNy4zMDdjLTEuNzA2IDEuNzA2LTMuNDEzIDIuNTU5LTUuOTczIDIuNTU5eiIvPjxwYXRoIGQ9Ik0yNTYuMDc3IDQxMS4xOTljLTIuNTYgMC00LjI2Ny0uODUzLTUuOTczLTIuNTZsLS44NTMtLjg1M2MtNjIuMjkzLTY2LjU2LTk4Ljk4Ny0xNTIuNzQ3LTEwMy4yNTMtMjQzLjIgMC0zLjQxMyAxLjcwNy01Ljk3MyA0LjI2Ny03LjY4bDEwMS41NDctNjRjMi41Ni0xLjcwNyA1Ljk3My0xLjcwNyA5LjM4NyAwbDEwMS41NDcgNjRjMi41NiAxLjcwNyA0LjI2NyA0LjI2NyA0LjI2NyA3LjY4YTM4OC4xIDM4OC4xIDAgMCAxLTEwNC4xMDcgMjQzLjJsLS44NTMuODUzYy0xLjcwOSAxLjcwNi0zLjQxNiAyLjU2LTUuOTc2IDIuNTZ6bS05My4wMTMtMjQyLjM0N2M1LjEyIDgxLjkyIDM4LjQgMTYwLjQyNyA5My4wMTMgMjIxLjg2NyA1NS40NjctNjEuNDQgODcuODkzLTEzOS45NDcgOTMuMDEzLTIyMS44NjdsLTkzLjAxMy01OC44OC05My4wMTMgNTguODh6Ii8+PHBhdGggZD0iTTE0MC4wMjQgMjgwLjYzOWgtLjg1M2MtMjMuODkzLTMuNDEzLTQ1LjIyNy0xNi4yMTMtNjAuNTg3LTM0LjEzMy01Ljk3My03LjY4LTExLjA5My0xNi4yMTMtMTQuNTA3LTI0Ljc0N0wuOTMgNjMuMDM5Yy0xLjcwNy0yLjU2LS44NTMtNS45NzMuODUzLTcuNjhzNC4yNjctNC4yNjcgNi44MjctNC4yNjdoMTI4YzIuNTYgMCA1LjEyLjg1MyA2LjgyNyAzLjQxM2w0MC45NiA0OS40OTNjMS43MDcgMS43MDcgMi41NiA0LjI2NyAxLjcwNyA2LjgyNyAwIDIuNTYtMS43MDcgNC4yNjctNC4yNjcgNS45NzNsLTUzLjc2IDM0LjEzM2MuODUzIDQwLjEwNyA2LjgyNyA4MC4yMTMgMTkuNjI3IDExOS40NjcuODUzIDIuNTYgMCA1Ljk3My0xLjcwNyA4LjUzMy0xLjcwNy44NTQtMy40MTMgMS43MDgtNS45NzMgMS43MDh6TTIxLjQxIDY4LjE1OWw1OC44OCAxNDYuNzczYzIuNTYgNi44MjcgNi44MjcgMTMuNjUzIDExLjk0NyAxOS42MjcgOS4zODcgMTEuOTQ3IDIxLjMzMyAyMC40OCAzNS44NCAyNC43NDctMTEuOTQ3LTM2LjY5My0xNy4wNjctNzUuMDkzLTE3LjA2Ny0xMTQuMzQ3IDAtMi41NiAxLjcwNy01Ljk3MyA0LjI2Ny02LjgyN2w0OS40OTMtMzAuNzItMzIuNDI3LTM5LjI1M0gyMS40MXptMzUwLjcyIDIxMi40OGMtMi41NiAwLTUuMTItLjg1My02LjgyNy0zLjQxM3MtMi41Ni01LjEyLTEuNzA3LTguNTMzYzEyLjgtMzkuMjUzIDE5LjYyNy03OS4zNiAxOS42MjctMTE5LjQ2N2wtNTMuNzYtMzQuMTMzYy0xLjcwNy0xLjcwNy0zLjQxMy0zLjQxMy00LjI2Ny01Ljk3MyAwLTIuNTYgMC01LjEyIDEuNzA3LTYuODI3bDQwLjk2LTQ5LjQ5M2MyLjU2IDAgNS4xMi0xLjcwNyA3LjY4LTEuNzA3aDEyOGMyLjU2IDAgNS4xMiAxLjcwNyA2LjgyNyAzLjQxMyAxLjcwNyAyLjU2IDEuNzA3IDUuMTIuODUzIDcuNjhsLTYzLjE0NyAxNTkuNTczYy0zLjQxMyA4LjUzMy04LjUzMyAxNy4wNjctMTQuNTA3IDIzLjg5My0xNS4zNiAxOC43NzMtMzYuNjkzIDMwLjcyLTYwLjU4NyAzNC4xMzMuMDAyLjg1NC4wMDIuODU0LS44NTIuODU0em0tMjQuNzQ2LTE3NC4wOCA0OS40OTMgMzAuNzJjMi41NiAyLjU2IDQuMjY3IDUuMTIgNC4yNjcgNy42OCAwIDM5LjI1My01LjEyIDc3LjY1My0xNi4yMTMgMTE1LjIgMTMuNjUzLTUuMTIgMjYuNDUzLTEzLjY1MyAzNS44NC0yNC43NDcgNS4xMi01Ljk3MyA4LjUzMy0xMi44IDExLjk0Ny0xOS42MjdsNTguMDI3LTE0Ny42MjdIMzc5LjgxbC0zMi40MjYgMzguNDAxem0tMTUyLjc0NyAyNjEuMTJjMC01LjEyLTMuNDEzLTguNTMzLTguNTMzLTguNTMzLTUuMTIgMC04LjUzMyAzLjQxMy04LjUzMyA4LjUzM3MzLjQxMyA4LjUzMyA4LjUzMyA4LjUzM2M1LjEyIDAgOC41MzMtMy40MTMgOC41MzMtOC41MzMiLz48dGV4dCB4PSIyMTAiIHk9IjI5MCIgc3R5bGU9ImZvbnQ6NzAwIDE4MHB4IHNhbnMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEgMSkiPko8L3RleHQ+PC9zdmc+" />';
+
+					if (__accounts.length > 0) { // 有账户
+						var addr = __accounts[0];
+						$("#connAddr")[0].innerHTML = addr.substr(0,6) + '...' + addr.substr(-4);
+						$("#connLink").attr('onclick', '');
+						$("#connLink").attr('href', '/address/' + addr);
+
+						getAddressJNS(addr, function (jns_info) {
+							if (jns_info) {
+								$("#connAddr")[0].innerHTML = '<img height="14px" src="' + jns_info.image + '" />';
+								$("#connLink").attr('onclick', '');
+								$("#connLink").attr('href', '/did/' + jns_info.description); // "description" is a legacy naming... sorry.
+							} 
+						});
+
+					} else { // 没有账户
+						$("#connAddr")[0].innerHTML = '连接账户';
+						$("#connLink").attr('onclick', 'connect()');
+						$("#connLink").attr('href', '');
+					}
+
+				} else { // 未知网络
+					$("#connAddr")[0].innerHTML = '未知网络';
+					$("#connNet")[0].innerHTML = parseInt(__chainId, 16);
+					$("#connLink").attr('onclick', 'switchNetwork()');
+					$("#connLink").attr('href', '');
+				}
+			} else { // 没有网络
+				$("#connAddr")[0].innerHTML = '';
+				$("#connNet")[0].innerHTML = '?'; // no web3 found
+				$("#connLink").attr('onclick', '');
+				$("#connLink").attr('href', 'https://jnsdao.com/docs/joule-basics/wallet-rpc');
+			}
+
+		}
+
+		function parseTokenURI(tokenURI) {
+			var [t, s] = tokenURI.split(',');
+			if (t == 'data:application/json;base64') {
+				var metadata = JSON.parse(atob(s));
+				/*var [t2, s2] = metadata.image.split(',');
+				if (t2 == 'data:image/svg+xml;base64') {
+					var svg = atob(s2);
+					metadata.image = svg;
+				}*/
+				return metadata;
+			}
+			return null;
+		}
+
+		function getAddressJNS(addr, callback) {
+			// for web3 0.15.0
+			/*var jns_contract = web3.eth.contract(jns_ABI).at(jns_contract_address);
+			jns_contract._whois.call(addr, function (err, result) {
+				if (!err) {
+					var jns_id = result.toString();
+					if (jns_id > 0) {
+						jns_contract.tokenURI.call(jns_id, function (err2, result2) {
+							var jns_tokenURI = result2;
+							var jns_info = parseTokenURI(jns_tokenURI);
+							callback(jns_info);
+						});
+					}
+				}
+			});*/
+
+			// for web3 1.8.2
+			var jns_contract = new web3.eth.Contract(jns_ABI, jns_contract_address);
+			jns_contract.methods._whois(addr).call(function (err, result) {
+				if (!err) {
+					var jns_id = result.toString();
+					if (jns_id > 0) {
+						jns_contract.methods.tokenURI(jns_id).call(function (err2, result2) {
+							var jns_tokenURI = result2;
+							var jns_info = parseTokenURI(jns_tokenURI);
+							callback(jns_info);
+						});
+					}
+				}
+			});
+		}
+
+		// init to check chainId... we are waiting for body to be loaded first...
+		var onBodyLoaded = function() {
+
+			if (window.ethereum) {
+
+				// register listeners
+				window.ethereum.on('chainChanged', function (chainId) {
+					console.log("[index] switched to chain id: ", parseInt(chainId, 16));
+					showHideConnect(chainId, null);
+				});
+
+				window.ethereum.on('accountsChanged', function (accounts) {
+					console.log("[index] switched to accounts: ", accounts);
+					showHideConnect(null, accounts);
+				});
+
+				// get chain id in async way (note: window.ethereum.chainId will get null)
+				window.ethereum
+					.request({ method: 'eth_chainId' })
+					.then((chainId) => {
+						console.log(`[index] got chain id: ${parseInt(chainId, 16)}`);
+
+						var account = window.ethereum.selectedAddress;
+						var accounts = account ? [account] : [];
+						console.log("[index] connected account is: ", accounts);
+
+						showHideConnect(chainId, accounts);
+
+					})
+					.catch((error) => {
+						console.error(`[index] error fetching chainId: ${error.code}: ${error.message}`);
+						showHideConnect(null, null);
+					});
+
+			} else {
+				console.log('showHideConnect(null, null)');
+				showHideConnect(null, null);
+			}
+		};
+
+		// connect to check account...
+		function connect() {
+
+			if (window.ethereum) {
+				window.ethereum
+					.request({ method: 'eth_requestAccounts' })
+					.then((accounts) => {
+						console.log("connected account is: ", accounts[0]);
+						showHideConnect(null, accounts);
+					})
+					.catch((error) => {
+						console.error(`Error requesting accounts: ${error.code}: ${error.message}`);
+					});
+
+			} else {
+				alert('请先正确配置钱包再连接')
+			}
+		}
+
+		// switch network...
+		function switchNetwork() {
+			function addNetwork(env) {
+					env.request({ method: 'wallet_addEthereumChain', 
+						params: [{ 
+							chainId: `0xe52`,
+							chainName: 'Jouleverse Mainnet',
+							nativeCurrency: {
+								name: 'Joule',
+								symbol: 'J ',
+								decimals: 18
+							},
+							rpcUrls: ['http://rpc.jnsdao.com:8502', 'https://rpc.jnsdao.com:8503'],
+								iconUrls: ['https://jnsdao.com/img/logo.svg'],
+								blockExplorerUrls: ['https://jscan.jnsdao.com'],
+							}] })
+					.then((res) => {
+						dialogShowTxt("欢迎👏👏👏", `已成功添加Jouleverse Mainnet区块链网络！开启你的精彩旅程吧～`); })
+					.catch((error) => {
+						console.error(`Error add chain: ${error.code}: ${error.message}`);
+						dialogShowTxt("无法添加网络", `添加Jouleverse Mainnet区块链网络失败：${error.code}: ${error.message}`);
+					});
+			}
+
+			function handleEthereum() {
+				const { ethereum } = window;
+
+				if (ethereum /* && ethereum.isMetaMask */) {
+					ethereum
+						.request({ method: "wallet_switchEthereumChain", 
+							params: [{ chainId: `0xe52` }] })
+						.then((res) => {
+							dialogShowTxt("欢迎👏👏👏", `已成功切换至Jouleverse Mainnet区块链网络！开启你的精彩旅程吧～`); })
+						.catch((error) => {
+							console.error(`Error switch chain: ${error.code}: ${error.message}`);
+							dialogShowHtml(`未找到区块链网络(${error.code})`, `请先添加Jouleverse Mainnet区块链网络：
+								<ul><li>网络名称: Jouleverse Mainnet</li>
+								<li>网络 URL: https://rpc.jnsdao.com:8503</li>
+								<li>链 ID: 3666</li>
+								<li>代币符号: J</li>
+								<li>区块链浏览器 URL: https://jscan.jnsdao.com</li>
+								</ul>`);
+							if (error.code === 4902 || error.code === -32603) { // network not added. mm mobile has different error code!
+								addNetwork(ethereum)
+							}
+						});
+				} else {
+					dialogShowHtml("未安装web3环境", "请先安装web3环境支持，比如<a href='https://metamask.io/'>Metamask小狐狸插件</a>，等");
+				}
+			}
+
+			if (window.ethereum) {
+				handleEthereum();
+			} else {
+				/*window.addEventListener("ethereum#initialized", handleEthereum, {
+					once: true,
+				});*/
+
+				// If the event is not dispatched by the end of the timeout, the user probably doesn't have MetaMask installed.
+				//setTimeout(handleEthereum, 3000); // 3 seconds
+				setTimeout(handleEthereum, 100);
+			}
+		}
+
+
+		// for search box...
+        function processRequest() {
+             var requestStr = $("#query")[0].value.split('0x').join('');
+
+            if (requestStr.length === 40) // if address?
+              return goToAddrInfos('0x'+requestStr)
+			else if (requestStr.toLowerCase().match(/\.j$/)) // if jns?
+				return goToJNSInfo(requestStr)
+
+			dialogShowHtml('搜索', `<p>不知道如何处理搜索词 ${requestStr} </p>` +
+				'<p>可以试试输入以下内容：</p>' +
+				'<li>链地址：如 0x3D86Dd50C2f333d3d79Da2DE6bCd5706adD7a20c</li>' + 
+				'<li>JNS名字：如 love.j</li>' +
+				'</ul>')
+        };
+
+        function goToJNSInfo(requestStr) {
+			console.log(requestStr);
+            location.hash = PREFIX + '/jns/'+requestStr;
+        }
+
+        function goToAddrInfos(requestStr) {
+            location.hash = PREFIX + '/offer/'+requestStr;
+        }
+
+	</script>
+</head>
+<body onload="onBodyLoaded()">
+  
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+			<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+            <a href="/#/" class="navbar-brand">担保转让JNS</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+            <form  name="search_form" onsubmit="processRequest()"  class="navbar-form navbar-right">
+            <div class="form-group">
+            <input type="text" placeholder="JNS域名/用户地址" name="requestType" required  id="query"  class="form-control"><br>
+            </div>
+            <button type="submit" class="btn btn-success">搜索</button></form>
+            </ul>
+			<ul class="nav navbar-nav navbar-right">
+				<li id="connect" style="display:inline-block">
+					<a id="connLink" style="cursor:pointer" onclick="connect()">
+						<span id="connAddr"></span>
+						[<span id="connNet">?</span>]
+					</a>
+				</li>
+			</ul>
+	    </div>
+    </div>
+</nav>
+
+<div ng-view></div>
+
+<!--Libs-->
+
+  <script src="mirror/cdn.jsdelivr.net/npm/jqeury@3.7.0/dist/jquery.min.js"></script>
+  <script src="mirror/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+  <script src="bower_components/angular/angular.min.js"></script>
+  <script src="bower_components/angular-route/angular-route.min.js"></script>
+  <script src="bower_components/angular-bootstrap/ui-bootstrap.min.js"></script>
+
+<!--Abi's-->
+  <script src="scripts/abi/jns.nft.js"></script>
+
+<!--Core-->
+  <script src="app.js"></script>
+
+<!--Controllers-->
+  <script src="scripts/controllers/mainController.js"></script>
+
+  <!--Services-->
+  <div id="dialog-warning" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+		  <!-- Modal content-->
+		  <div class="modal-content">
+			  <center><div class="modal-header">
+					  <h4 class="modal-title"><span id="warning-title"></span></h4>
+				  </div></center>
+				  <div class="modal-body">
+					  <code><p style="word-break:break-all;" id="warning-content"></p></code>
+				  </div>
+				  <div class="modal-footer">
+					  <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+				  </div>
+		  </div>
+	  </div>
+  </div>
+
+
+  <div class="footer" style="bottom: 0px;text-align: center;background-color: white; width:100%;">
+	  <footer>
+		  <hr>
+		  <p>open-source. public domain. no warranty.</p>
+	  </footer>
+  </div>
+  <!--script>
+	  $("#warning-title").text('无法连接到区块链网络');
+	  $("#warning-text").text('无法连接到RPC服务，请检查你的网络连接是否畅通' );
+	  </script-->
+</body>
+</html>

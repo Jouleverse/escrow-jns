@@ -1,0 +1,22 @@
+<div class="container" style="padding-top: 50px;">
+
+	<h1 style="text-align:center;">由智能合约担保的点对点转让JNS域名</h1>
+
+	<div style="text-align:center; margin-top: 30px;">
+		<h3>JNS域名：<img height="32px" src="{{ jnsInfo.logo }}"></img></h3>
+		<h5>当前持有人：{{ jnsInfo.ownerJNSId }} ({{ jnsInfo.ownerAddress }})</h5>
+	</div>
+
+	<div style="text-align:center; margin-top: 30px;">
+		<h4>
+			<p>区块链网络访问状态：{{status || "检测中..."}}</p>
+			<p><a href="https://jscan.jnsdao.com/#/block/{{blockNum}}">最新区块高度: {{blockHeight || "读取中..."}}</a></p>
+		</h4>
+	</div>
+
+	<div style="text-align:center;margin-top:30px">
+		<div><h5>👇👇👇没有找到区块链网络？👇👇👇</h5></div>
+		<div><input type="button" class="btn btn-primary" onclick="switchNetwork()" value="点此一键添加Jouleverse Mainnet"></input></div>
+	</div>
+</div>
+

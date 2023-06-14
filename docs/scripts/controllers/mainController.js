@@ -174,6 +174,7 @@ angular.module('EscrowJNS')
 
 			$scope.ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 			$scope.ESCROW_CONTRACT_ADDRESS = ESCROW_CONTRACT_ADDRESS;
+			$scope.DEFAULT_ARBITRATOR = DEFAULT_ARBITRATOR;
 
 			////////////////////// parse uri ////////////////////////////
 			// entry /jns/:jnsId
@@ -243,6 +244,12 @@ angular.module('EscrowJNS')
 
 						console.log($scope.offerInfo);
 
+					} else { // no web3 env
+						$scope.offerInfo = {
+							seller: $scope.ZERO_ADDRESS,
+							buyer: $scope.ZERO_ADDRESS,
+							arbitrator: $scope.ZERO_ADDRESS,
+						}
 					}
 
 				}
@@ -264,9 +271,10 @@ angular.module('EscrowJNS')
 				console.log($scope.jns_location, $scope.jnsInfo.ownerAddress, $scope.offerInfo.seller, $scope.offerInfo.buyer);
 
 				// query names
-				$scope.offerInfo.sellerName = await getBoundJNSId($scope.offerInfo.seller) || '---';
-				$scope.offerInfo.buyerName = await getBoundJNSId($scope.offerInfo.buyer) || '---';
-				$scope.offerInfo.arbitratorName = await getBoundJNSId($scope.offerInfo.arbitrator) || '---';
+				$scope.offerInfo.sellerName = ($scope.offerInfo.seller != $scope.ZERO_ADDRESS && await getBoundJNSId($scope.offerInfo.seller)) || '---';
+				$scope.offerInfo.buyerName = ($scope.offerInfo.buyer != $scope.ZERO_ADDRESS && await getBoundJNSId($scope.offerInfo.buyer)) || '---';
+				$scope.offerInfo.arbitratorName = ($scope.offerInfo.arbitratorName != $scope.ZERO_ADDRESS && await getBoundJNSId($scope.offerInfo.arbitrator)) || '---';
+				$scope.DEFAULT_ARBITRATOR_NAME = await getBoundJNSId($scope.DEFAULT_ARBITRATOR) || '---';
 				console.log($scope.offerInfo.sellerName, $scope.offerInfo.buyerName, $scope.offerInfo.arbitratorName);
 			}
 

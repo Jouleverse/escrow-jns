@@ -26,9 +26,9 @@ angular.module('EscrowJNS', ['ngRoute','ui.bootstrap'])
 
 		var protocol = location.protocol;
 
-		var hostname = 'localhost';
-		//var hostname = 'rpc.jnsdao.com';
-		var port = (hostname == 'localhost' || hostname == '127.0.0.1')? 9545 : //8501 : // local dev
+		//var hostname = 'localhost';
+		var hostname = 'rpc.jnsdao.com';
+		var port = (hostname == 'localhost' || hostname == '127.0.0.1')? 9545 /* truffle */ : //8501 /* local geth */ : 
 			(protocol == 'http:' ? 8502 : 8503); // production
 
 		var rpc_node_url = protocol + '//' + hostname + ':' + port;

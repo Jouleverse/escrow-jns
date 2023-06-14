@@ -16,7 +16,7 @@
 		<div data-ng-if="jnsInfo !== undefined && offerInfo !== undefined">
 			<h3>
 				JNS域名：
-				<span data-ng-if="jnsInfo.tokenId > 0"><a href="https://jscan.jnsdao.com/#/jns/{{jnsInfo.name}}"><img height="32px" src="{{ jnsInfo.logo }}"></img></a></span>
+				<span data-ng-if="jnsInfo.tokenId > 0"><a href="https://jscan.jnsdao.com/#/jns/{{jnsInfo.jnsId}}"><img height="32px" src="{{ jnsInfo.logo }}"></img></a></span>
 				<span data-ng-if="jnsInfo.tokenId == 0">无</span>
 			</h3>
 			<!--p>token id：{{ jnsInfo.tokenId }}</p>

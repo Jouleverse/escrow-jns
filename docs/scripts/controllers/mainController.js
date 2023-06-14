@@ -331,17 +331,17 @@ angular.module('EscrowJNS')
 			var bound_address = await jns_contract.methods._bound(token_id).call();
 			var approved_spender = await jns_contract.methods.getApproved(token_id).call();
 			var token_uri = await jns_contract.methods.tokenURI(token_id).call();
-			var img = parseTokenURI(token_uri).image;
+			var token_data = parseTokenURI(token_uri);
 
 			var info = {
-				name: token_uri.name,
+				jnsId: token_data.description,
 				tokenId: token_id,
 				ownerAddress: owner_address,
 				ownerJNSId: owner_jnsId,
 				boundAddress: bound_address,
 				spenderAddress: approved_spender,
 				tokenURI: token_uri,
-				logo: img
+				logo: token_data.image,
 			}
 
 			console.log(info);

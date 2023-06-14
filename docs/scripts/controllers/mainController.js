@@ -155,7 +155,7 @@ angular.module('EscrowJNS')
 			if ($scope.offerId !== undefined) {
 				const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
 				$scope.offerInfo = await escrow_contract.methods.transactions($scope.offerId).call();
-				if ($scope.offerInfo.state > 0) {
+				if ($scope.offerInfo.tokenId > 0) {
 					$scope.jnsInfo = await getJNSInfoByTokenId($scope.offerInfo.tokenId);
 				}
 				console.log($scope.offerInfo);

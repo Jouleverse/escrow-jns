@@ -62,8 +62,11 @@
 						</span>
 					</td>
 					<td class="text-center small">
-						<span data-ng-if="offerInfo.state == 0 && offerInfo.seller !== ZERO_ADDRESS">
+						<span data-ng-if="offerInfo.state == 0 && offerInfo.seller !== ZERO_ADDRESS && jnsInfo.ownerAddress.toLowerCase() != offerInfo.buyer.toLowerCase()">
 							未邀约
+						</span>
+						<span data-ng-if="offerInfo.state == 0 && jnsInfo.ownerAddress.toLowerCase() == offerInfo.buyer.toLowerCase()">
+							持有
 						</span>
 					</td>
 				</tr>
@@ -89,11 +92,11 @@
 					</td>
 					<td class="text-center small"></td>
 					<td class="text-center small">
-						<span data-ng-if="offerInfo.state == 0 && offerInfo.buyer.toLowerCase() != offerInfo.seller.toLowerCase()">
+						<span data-ng-if="offerInfo.state == 0 && jnsInfo.ownerAddress.toLowerCase() != offerInfo.buyer.toLowerCase()">
 							<input type="button" class="btn btn-primary" ng-click="makeOffer(jnsInfo.tokenId)" value="发起邀约"></input>
 						</span>
-						<span data-ng-if="offerInfo.state == 0 && offerInfo.buyer.toLowerCase() == offerInfo.seller.toLowerCase() && offerInfo.seller !== ZERO_ADDRESS">
-							不能向自己发起邀约
+						<span data-ng-if="offerInfo.state == 0 && jnsInfo.ownerAddress.toLowerCase() == offerInfo.buyer.toLowerCase() && offerInfo.seller !== ZERO_ADDRESS">
+							---
 						</span>
 					</td>
 				</tr>

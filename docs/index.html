@@ -56,7 +56,7 @@
 		
 		function handlerShowRct(DIALOG_TITLE) {
 			return (receipt) => {
-				dialogShowTxt(DIALOG_TITLE, '上链成功！');
+				dialogShowTxt(DIALOG_TITLE, '上链成功！请刷新页面。');
 			}
 		}
 
@@ -134,7 +134,7 @@
 
 		function getAddressJNS(addr, callback) {
 			// for web3 0.15.0
-			/*var jns_contract = web3.eth.contract(jns_ABI).at(jns_contract_address);
+			/*var jns_contract = web3.eth.contract(JNS_ABI).at(JNS_CONTRACT_ADDRESS);
 			jns_contract._whois.call(addr, function (err, result) {
 				if (!err) {
 					var jns_id = result.toString();
@@ -149,7 +149,7 @@
 			});*/
 
 			// for web3 1.8.2
-			var jns_contract = new web3.eth.Contract(jns_ABI, jns_contract_address);
+			var jns_contract = new web3.eth.Contract(JNS_ABI, JNS_CONTRACT_ADDRESS);
 			jns_contract.methods._whois(addr).call(function (err, result) {
 				if (!err) {
 					var jns_id = result.toString();

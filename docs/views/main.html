@@ -31,10 +31,16 @@
 					<th class="text-center">邀约人</th>
 				</tr>
 				<tr>
+					<td>名称</td>
+					<td class="text-center small" style="word-break:break-all">{{offerInfo.sellerName}}</td>
+					<td class="text-center small" style="word-break:break-all">---</td>
+					<td class="text-center small" style="word-break:break-all">{{offerInfo.buyerName}}</td>
+				</tr>
+				<tr>
 					<td>地址</td>
 					<td class="text-center small" style="word-break:break-all">{{offerInfo.seller}}</td>
 					<td class="text-center small" style="word-break:break-all">{{ESCROW_CONTRACT_ADDRESS}}</td>
-					<td class="text-center small" style="word-break:break-all">{{offerInfo.buyerName + ' ' + offerInfo.buyer}}</td>
+					<td class="text-center small" style="word-break:break-all">{{offerInfo.buyer}}</td>
 				</tr>
 				<tr>
 					<td>资产</td>
@@ -108,6 +114,9 @@
 								---
 							</span>
 						</span>
+						<span data-ng-if="offerInfo.state == 1 && jns_location == 'SELLER'">
+							<input type="button" class="btn btn-secondary" ng-click="abortOffer(offerInfo)" value="取消邀约"></input>
+						</span>
 					</td>
 				</tr>
 			</table>
@@ -115,7 +124,7 @@
 
 			<hr />
 
-			<p><b>见证人</b>：<span class="small">{{ offerInfo.arbitrator }}</span></p>
+			<p><b>见证人</b> 名称：{{ offerInfo.arbitratorName }} 地址：<span class="small">{{ offerInfo.arbitrator }}</span></p>
 			<p>见证人联系方式：</p>
 			<p><img width="256px" src="/images/arbitrator.png"></img></p>
 

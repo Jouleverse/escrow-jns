@@ -1,6 +1,8 @@
-//var escrow_contract_address = ""; // mainnet V1
-var escrow_contract_address = "0x7cb607AdD641aCF8285f1FCd19a1E287Ddb0d35f"; // local truffle dev
-var escrow_ABI = [
+//const ESCROW_CONTRACT_ADDRESS = ""; // mainnet V1
+//const DEFAULT_ARBITRATOR = ""; // mainnet, Koant for example
+const ESCROW_CONTRACT_ADDRESS = "0x7cb607AdD641aCF8285f1FCd19a1E287Ddb0d35f"; // local truffle dev
+const DEFAULT_ARBITRATOR = "0x5375e8f57299768a0aec47da6ebacf96b657960d"; // local truffle dev accounts[2]
+const ESCROW_ABI = [
 	{
 		"inputs": [],
 		"stateMutability": "nonpayable",

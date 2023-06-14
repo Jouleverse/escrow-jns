@@ -1,7 +1,7 @@
 //--deprecated-- var jns_contract_address = "0x2fA943b1aF8ecA7177d62B71e0C41f092c6795c2"; // mainnet V1
 //var jns_contract_address = "0xf8AbF36Bb2dc525b1E566d6B42F6Fd1BB2035b89"; // mainnet V2
-var jns_contract_address = "0xFC31C2faE033bAB9c157d751B5fb2b77b0976271"; // local truffle dev
-var jns_ABI = [
+const JNS_CONTRACT_ADDRESS = "0xFC31C2faE033bAB9c157d751B5fb2b77b0976271"; // local truffle dev
+const JNS_ABI = [
 	{
 		"anonymous": false,
 		"inputs": [

@@ -21,13 +21,13 @@ angular.module('EscrowJNS')
 						if ($scope.offerInfo.seller.toLowerCase() == connectedAccount.toLowerCase()) {
 							dialogShowTxt(DIALOG_TITLE, '错误：不能向自己发起邀约');
 						} else {
-							const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
-							const ARBITRATOR = '0x5375e8f57299768a0aec47da6ebacf96b657960d'; // dev account 2
+							const escrow_contract = new web3.eth.Contract(ESCROW_ABI, ESCROW_CONTRACT_ADDRESS);
 							const _message = web3.utils.padRight('0x00', 64); //暂不用
 							console.log(_message);
-							const makeOffer_call = escrow_contract.methods.create(ARBITRATOR, jns_contract_address, jns_token_id, _message);
+							const makeOffer_call = escrow_contract.methods.create(DEFAULT_ARBITRATOR, JNS_CONTRACT_ADDRESS, jns_token_id, _message);
 							makeOffer_call.estimateGas({from: connectedAccount}).then((gas) => {
 								console.log(gas);
+								dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
 								makeOffer_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 									.then(handlerShowRct(DIALOG_TITLE))
 									.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -43,6 +43,35 @@ angular.module('EscrowJNS')
 
 			}
 
+			$scope.abortOffer = function(offerInfo) {
+				const DIALOG_TITLE = '取消邀约';
+
+				if (window.ethereum && window.ethereum.isConnected()) {
+					web3.setProvider(window.ethereum);
+					const connectedAccount = window.ethereum.selectedAddress;
+
+					const escrow_contract = new web3.eth.Contract(ESCROW_ABI, ESCROW_CONTRACT_ADDRESS);
+
+					if (offerInfo.buyer.toLowerCase() !== connectedAccount.toLowerCase()) {
+						dialogShowTxt(DIALOG_TITLE, '错误：只有邀约发起人可以取消邀约');
+					} else {
+						const abortOffer_call = escrow_contract.methods.abort();
+						abortOffer_call.estimateGas({from: connectedAccount}).then((gas) => {
+							console.log(gas);
+							dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
+							abortOffer_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
+								.then(handlerShowRct(DIALOG_TITLE))
+								.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
+						}).catch((err) => {
+							dialogShowTxt(DIALOG_TITLE, '错误：无法评估gas：' + err.data.message); //展示合约逻辑报错
+						});
+					}
+
+				} else {
+					dialogShowTxt(DIALOG_TITLE, '错误：没有web3环境，无法完成操作');
+				}
+
+			}
 			$scope.approve = function(jns_token_id) {
 				const DIALOG_TITLE = '授权合约托管';
 
@@ -57,10 +86,11 @@ angular.module('EscrowJNS')
 						if ($scope.offerInfo.seller.toLowerCase() !== connectedAccount.toLowerCase()) {
 							dialogShowTxt(DIALOG_TITLE, '错误：只有该JNS域名的持有者可以进行授权');
 						} else {
-							const jns_contract = new web3.eth.Contract(jns_ABI, jns_contract_address);
-							const approve_call = jns_contract.methods.approve(escrow_contract_address, jns_token_id);
+							const jns_contract = new web3.eth.Contract(JNS_ABI, JNS_CONTRACT_ADDRESS);
+							const approve_call = jns_contract.methods.approve(ESCROW_CONTRACT_ADDRESS, jns_token_id);
 							approve_call.estimateGas({from: connectedAccount}).then((gas) => {
 								console.log(gas);
+								dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
 								approve_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 									.then(handlerShowRct(DIALOG_TITLE))
 									.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -83,7 +113,7 @@ angular.module('EscrowJNS')
 					web3.setProvider(window.ethereum);
 					const connectedAccount = window.ethereum.selectedAddress;
 
-					const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
+					const escrow_contract = new web3.eth.Contract(ESCROW_ABI, ESCROW_CONTRACT_ADDRESS);
 
 					if (offerInfo.seller.toLowerCase() !== connectedAccount.toLowerCase()) {
 						dialogShowTxt(DIALOG_TITLE, '错误：只有该JNS域名的持有者可以接受邀约');
@@ -92,6 +122,7 @@ angular.module('EscrowJNS')
 						const acceptOffer_call = escrow_contract.methods.accept(offerInfo.buyer);
 						acceptOffer_call.estimateGas({from: connectedAccount}).then((gas) => {
 							console.log(gas);
+							dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
 							acceptOffer_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 								.then(handlerShowRct(DIALOG_TITLE))
 								.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -113,7 +144,7 @@ angular.module('EscrowJNS')
 					web3.setProvider(window.ethereum);
 					const connectedAccount = window.ethereum.selectedAddress;
 
-					const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
+					const escrow_contract = new web3.eth.Contract(ESCROW_ABI, ESCROW_CONTRACT_ADDRESS);
 
 					if (offerInfo.seller.toLowerCase() !== connectedAccount.toLowerCase()) {
 						dialogShowTxt(DIALOG_TITLE, '错误：只有该JNS域名的原持有者可以确认发货');
@@ -121,6 +152,7 @@ angular.module('EscrowJNS')
 						const confirmOffer_call = escrow_contract.methods.confirm(offerInfo.buyer);
 						confirmOffer_call.estimateGas({from: connectedAccount}).then((gas) => {
 							console.log(gas);
+							dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
 							confirmOffer_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 								.then(handlerShowRct(DIALOG_TITLE))
 								.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -141,7 +173,7 @@ angular.module('EscrowJNS')
 		$scope.init = async function () {
 
 			$scope.ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
-			$scope.ESCROW_CONTRACT_ADDRESS = escrow_contract_address;
+			$scope.ESCROW_CONTRACT_ADDRESS = ESCROW_CONTRACT_ADDRESS;
 
 			////////////////////// parse uri ////////////////////////////
 			// entry /jns/:jnsId
@@ -153,7 +185,7 @@ angular.module('EscrowJNS')
 			console.log($scope.offerId);
 
 			if ($scope.offerId !== undefined) {
-				const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
+				const escrow_contract = new web3.eth.Contract(ESCROW_ABI, ESCROW_CONTRACT_ADDRESS);
 				$scope.offerInfo = await escrow_contract.methods.transactions($scope.offerId).call();
 
 				if ($scope.offerInfo.tokenId > 0) {
@@ -197,17 +229,17 @@ angular.module('EscrowJNS')
 						web3.setProvider(window.ethereum);
 						const connectedAccount = window.ethereum.selectedAddress;
 
-						const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
+						const escrow_contract = new web3.eth.Contract(ESCROW_ABI, ESCROW_CONTRACT_ADDRESS);
 						$scope.offerInfo = await escrow_contract.methods.transactions(connectedAccount).call();
 
-						if ($scope.offerInfo.state == 0 && $scope.jnsInfo.ownerAddress != escrow_contract_address) {
+						if ($scope.offerInfo.state == 0 && $scope.jnsInfo.ownerAddress != ESCROW_CONTRACT_ADDRESS) {
 							$scope.offerInfo.seller = $scope.jnsInfo.ownerAddress;
 							$scope.offerInfo.buyer = connectedAccount;
 						}
 
-						if ($scope.offerInfo.buyer.toLowerCase() == connectedAccount.toLowerCase()) {
+						/*if ($scope.offerInfo.buyer.toLowerCase() == connectedAccount.toLowerCase()) {
 							$scope.offerInfo.buyerName = '我';
-						}
+						}*/
 
 						console.log($scope.offerInfo);
 
@@ -222,7 +254,7 @@ angular.module('EscrowJNS')
 				// locate the jns
 				if ($scope.jnsInfo.ownerAddress.toLowerCase() == $scope.offerInfo.seller.toLowerCase()) {
 					$scope.jns_location = 'SELLER';
-				} else if ($scope.jnsInfo.ownerAddress.toLowerCase() == escrow_contract_address.toLowerCase()) {
+				} else if ($scope.jnsInfo.ownerAddress.toLowerCase() == ESCROW_CONTRACT_ADDRESS.toLowerCase()) {
 					$scope.jns_location = 'ESCROW';
 				} else if ($scope.jnsInfo.ownerAddress.toLowerCase() == $scope.offerInfo.buyer.toLowerCase()) {
 					$scope.jns_location = 'BUYER';
@@ -230,6 +262,12 @@ angular.module('EscrowJNS')
 					$scope.jns_location = 'UNKNOWN';
 				}
 				console.log($scope.jns_location, $scope.jnsInfo.ownerAddress, $scope.offerInfo.seller, $scope.offerInfo.buyer);
+
+				// query names
+				$scope.offerInfo.sellerName = await getBoundJNSId($scope.offerInfo.seller) || '---';
+				$scope.offerInfo.buyerName = await getBoundJNSId($scope.offerInfo.buyer) || '---';
+				$scope.offerInfo.arbitratorName = await getBoundJNSId($scope.offerInfo.arbitrator) || '---';
+				console.log($scope.offerInfo.sellerName, $scope.offerInfo.buyerName, $scope.offerInfo.arbitratorName);
 			}
 
 			////////////////////// blockchain info ////////////////////////////
@@ -248,8 +286,19 @@ angular.module('EscrowJNS')
 
 		}
 
+		async function getBoundJNSId(addr) {
+			const jns_contract = new web3.eth.Contract(JNS_ABI, JNS_CONTRACT_ADDRESS);
+			const jns_token_id = await jns_contract.methods._whois(addr).call();
+			if (jns_token_id > 0) {
+				const jns_name = await jns_contract.methods._allTokensName(jns_token_id).call();
+				return jns_name + '.j';
+			} else {
+				return undefined;
+			}
+		}
+
 		async function getJNSInfo(jns_name) {
-			var jns_contract = new web3.eth.Contract(jns_ABI, jns_contract_address);
+			var jns_contract = new web3.eth.Contract(JNS_ABI, JNS_CONTRACT_ADDRESS);
 
 			// search jns
 			var token_id = await jns_contract.methods._nslookup(jns_name).call();
@@ -263,7 +312,7 @@ angular.module('EscrowJNS')
 		}
 
 		async function getJNSInfoByTokenId(token_id) {
-			var jns_contract = new web3.eth.Contract(jns_ABI, jns_contract_address);
+			var jns_contract = new web3.eth.Contract(JNS_ABI, JNS_CONTRACT_ADDRESS);
 			var owner_address = await jns_contract.methods.ownerOf(token_id).call();
 			var owner_jnsId = await jns_contract.methods._whois(owner_address).call();
 			if (owner_jnsId !== 0) {

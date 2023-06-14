@@ -1,6 +1,6 @@
 <div class="container" style="padding-top: 50px;">
 
-	<h1 style="text-align:center;">由智能合约托管的点对点转让JNS域名</h1>
+	<h1 style="text-align:center;">由智能合约托管的点到点转让JNS域名</h1>
 	<hr />
 
 	<div style="text-align:center; margin-top: 30px;">
@@ -16,7 +16,7 @@
 		<div data-ng-if="jnsInfo !== undefined && offerInfo !== undefined">
 			<h3>
 				JNS域名：
-				<span data-ng-if="jnsInfo.tokenId > 0"><img height="32px" src="{{ jnsInfo.logo }}"></img></span>
+				<span data-ng-if="jnsInfo.tokenId > 0"><a href="https://jscan.jnsdao.com/#/jns/{{jnsInfo.name}}"><img height="32px" src="{{ jnsInfo.logo }}"></img></a></span>
 				<span data-ng-if="jnsInfo.tokenId == 0">无</span>
 			</h3>
 			<!--p>token id：{{ jnsInfo.tokenId }}</p>

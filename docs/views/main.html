@@ -4,13 +4,21 @@
 	<hr />
 
 	<div style="text-align:center; margin-top: 30px;">
+		<div data-ng-if="jnsId !== undefined && jnsInfo == undefined">
+			<h5><span style="word-break:break-all">JNS域名：{{ jnsId }} 不存在！</span></h5>
+			<hr />
+		</div>
 		<div data-ng-if="jnsInfo == undefined && offerInfo !== undefined">
 			<h5><span style="word-break:break-all">链地址：{{ offerId }}</span></h5>
 			<p>👉👉👉该地址名下没有转让邀约信息！👈👈👈</p>
 			<hr />
 		</div>
 		<div data-ng-if="jnsInfo !== undefined && offerInfo !== undefined">
-			<h3>JNS域名：<img height="32px" src="{{ jnsInfo.logo }}"></img></h3>
+			<h3>
+				JNS域名：
+				<span data-ng-if="jnsInfo.tokenId > 0"><img height="32px" src="{{ jnsInfo.logo }}"></img></span>
+				<span data-ng-if="jnsInfo.tokenId == 0">无</span>
+			</h3>
 			<!--p>token id：{{ jnsInfo.tokenId }}</p>
 			<p>token owner：{{ jnsInfo.ownerJNSId }} ({{ jnsInfo.ownerAddress }})</p-->
 			<hr/>
@@ -83,20 +91,22 @@
 								<input type="button" class="btn btn-warning" ng-click="approve(jnsInfo.tokenId)" value="授权合约托管"></input>
 							</span>
 							<span data-ng-if="offerInfo.state == 1 && jnsInfo.spenderAddress != ZERO_ADDRESS && jns_location == 'SELLER'">
-								<input type="button" class="btn btn-warning" ng-click="acceptOffer(offerInfo)" value="接受邀约"></input>
+								<input type="button" class="btn btn-info" ng-click="acceptOffer(offerInfo)" value="接受邀约"></input>
 							</span>
 							<span data-ng-if="offerInfo.state == 2">
-								<input type="button" class="btn btn-warning" ng-click="confirmOffer(offerInfo)" value="确认发货"></input>
+								<input type="button" class="btn btn-danger" ng-click="confirmOffer(offerInfo)" value="确认发货"></input>
 							</span>
 						</span>
 					</td>
 					<td class="text-center small"></td>
 					<td class="text-center small">
-						<span data-ng-if="offerInfo.state == 0 && jnsInfo.ownerAddress.toLowerCase() != offerInfo.buyer.toLowerCase()">
-							<input type="button" class="btn btn-primary" ng-click="makeOffer(jnsInfo.tokenId)" value="发起邀约"></input>
-						</span>
-						<span data-ng-if="offerInfo.state == 0 && jnsInfo.ownerAddress.toLowerCase() == offerInfo.buyer.toLowerCase() && offerInfo.seller !== ZERO_ADDRESS">
-							---
+						<span data-ng-if="offerInfo.state == 0 && offerInfo.seller !== ZERO_ADDRESS">
+							<span data-ng-if="jnsInfo.ownerAddress.toLowerCase() != offerInfo.buyer.toLowerCase()">
+								<input type="button" class="btn btn-primary" ng-click="makeOffer(jnsInfo.tokenId)" value="发起邀约"></input>
+							</span>
+							<span data-ng-if="jnsInfo.ownerAddress.toLowerCase() == offerInfo.buyer.toLowerCase()">
+								---
+							</span>
 						</span>
 					</td>
 				</tr>

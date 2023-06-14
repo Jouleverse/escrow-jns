@@ -155,9 +155,23 @@ angular.module('EscrowJNS')
 			if ($scope.offerId !== undefined) {
 				const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
 				$scope.offerInfo = await escrow_contract.methods.transactions($scope.offerId).call();
+
 				if ($scope.offerInfo.tokenId > 0) {
 					$scope.jnsInfo = await getJNSInfoByTokenId($scope.offerInfo.tokenId);
-				}
+
+					if ($scope.offerInfo.state == 0 && $scope.jnsInfo.ownerAddress.toLowerCase() !== $scope.offerId.toLowerCase()) {
+						$scope.jnsInfo.tokenId = 0;
+						$scope.offerInfo.seller = $scope.ZERO_ADDRESS;
+					}
+				} else {
+					$scope.jnsInfo = { 
+						tokenId : 0,
+						ownerAddress: $scope.ZERO_ADDRESS,
+					};
+					$scope.offerInfo.seller = $scope.ZERO_ADDRESS;
+					$scope.offerInfo.buyer = $scope.offerId;
+				} 
+
 				console.log($scope.offerInfo);
 			}
 
@@ -176,24 +190,28 @@ angular.module('EscrowJNS')
 				var name = matched[1]; // the (.*) part
 				$scope.jnsInfo = await getJNSInfo(name);
 
-				//检查当前连接的地址是否已经make offer
-				if (window.ethereum && window.ethereum.isConnected()) {
-					web3.setProvider(window.ethereum);
-					const connectedAccount = window.ethereum.selectedAddress;
+				if ($scope.jnsInfo !== undefined) {
 
-					const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
-					$scope.offerInfo = await escrow_contract.methods.transactions(connectedAccount).call();
+					//检查当前连接的地址是否已经make offer
+					if (window.ethereum && window.ethereum.isConnected()) {
+						web3.setProvider(window.ethereum);
+						const connectedAccount = window.ethereum.selectedAddress;
 
-					if ($scope.offerInfo.state == 0 && $scope.jnsInfo.ownerAddress != escrow_contract_address) {
-						$scope.offerInfo.seller = $scope.jnsInfo.ownerAddress;
-						$scope.offerInfo.buyer = connectedAccount;
+						const escrow_contract = new web3.eth.Contract(escrow_ABI, escrow_contract_address);
+						$scope.offerInfo = await escrow_contract.methods.transactions(connectedAccount).call();
+
+						if ($scope.offerInfo.state == 0 && $scope.jnsInfo.ownerAddress != escrow_contract_address) {
+							$scope.offerInfo.seller = $scope.jnsInfo.ownerAddress;
+							$scope.offerInfo.buyer = connectedAccount;
+						}
+
+						if ($scope.offerInfo.buyer.toLowerCase() == connectedAccount.toLowerCase()) {
+							$scope.offerInfo.buyerName = '我';
+						}
+
+						console.log($scope.offerInfo);
+
 					}
-
-					if ($scope.offerInfo.buyer.toLowerCase() == connectedAccount.toLowerCase()) {
-						$scope.offerInfo.buyerName = '我';
-					}
-
-					console.log($scope.offerInfo);
 
 				}
 
@@ -236,7 +254,12 @@ angular.module('EscrowJNS')
 			// search jns
 			var token_id = await jns_contract.methods._nslookup(jns_name).call();
 			console.log(jns_name, token_id);
-			return getJNSInfoByTokenId(token_id);
+			
+			if (token_id > 0) {
+				return getJNSInfoByTokenId(token_id);
+			} else {
+				return undefined; //not found
+			}
 		}
 
 		async function getJNSInfoByTokenId(token_id) {

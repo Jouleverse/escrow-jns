@@ -13,6 +13,7 @@ an example implementation of escrow for JNS peer-to-peer exchange
 
 - 2023.6.8: contracts basically done. works fine, verified manually. testsuites not yet written.
 - 2023.6.15: dapp done and announced. just lack of arbitrator judge functions, TBD.
+- 2023.6.16: fix/improve: 1. search; 2. connected account; 3. detailed instructions.
 
 ## License
 

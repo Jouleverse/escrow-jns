@@ -1,17 +1,38 @@
 <div class="container" style="padding-top: 50px;">
 
 	<h1 style="text-align:center;">由智能合约托管的点到点转让JNS域名</h1>
+
+	<div style="display:block; text-align:center;">
+		<h4>
+			<p>区块链网络访问状态：{{status || "检测中..."}}</p>
+		</h4>
+	</div>
+
+	<hr />
+
+	<div style="display:block;text-align:center;">
+		<p>请输入域名搜索邀约标的，或输入邀约人的链地址搜索其发起的邀约：</p>
+		<div style="display:block;">
+			<form onsubmit="processRequest2()">
+				<span style="display:inline-block;">
+					<input type="text" placeholder="JNS域名/邀约人地址" name="requestType" required  id="query2"  class="form-control"/>
+				</span>
+				<button type="submit" class="btn btn-success">搜索</button>
+			</form>
+		</div>
+	</div>
+
 	<hr />
 
 	<div style="text-align:center; margin-top: 30px;">
+		<div data-ng-if="jnsId == undefined && offerId == undefined">
+			<h5><span style="word-break:break-all;color:#fa0">警告！无内容，请先搜索！</span></h5>
+		</div>
 		<div data-ng-if="jnsId !== undefined && jnsInfo == undefined">
-			<h5><span style="word-break:break-all">JNS域名：{{ jnsId }} 不存在！</span></h5>
-			<hr />
+			<h5><span style="word-break:break-all;color:#f00">错误！JNS域名：{{ jnsId }} 不存在！</span></h5>
 		</div>
 		<div data-ng-if="jnsInfo == undefined && offerInfo !== undefined">
-			<h5><span style="word-break:break-all">链地址：{{ offerId }}</span></h5>
-			<p>👉👉👉该地址名下没有转让邀约信息！👈👈👈</p>
-			<hr />
+			<h5><span style="word-break:break-all;color:#f00">错误！链地址：{{ offerId }} 名下没有邀约信息！</span></h5>
 		</div>
 		<div data-ng-if="jnsInfo !== undefined && offerInfo !== undefined">
 			<h3>
@@ -82,8 +103,9 @@
 					<td>操作</td>
 					<td class="text-center small">
 						<span data-ng-if="jnsId !== undefined">
-							<span data-ng-if="offerInfo.state == 1">
+							<span data-ng-if="offerInfo.state == 1 && offerInfo.tokenId == jnsInfo.tokenId">
 								<a href="#!/offer/{{offerInfo.buyer}}">邀约链接</a>
+								<p>请被邀约人搜索你的链地址即可打开该邀约</p>
 							</span>
 						</span>
 						<span data-ng-if="offerId !== undefined">
@@ -100,6 +122,10 @@
 					</td>
 					<td class="text-center small"></td>
 					<td class="text-center small">
+						<span data-ng-if="offerInfo.state > 0 && offerInfo.tokenId !== jnsInfo.tokenId">
+							无法发起邀约<br/>
+							你有进行中的其他邀约，<a href="#!/offer/{{offerInfo.buyer}}">点击查看</a>
+						</span>
 						<span data-ng-if="offerInfo.state == 0 && offerInfo.seller !== ZERO_ADDRESS">
 							<span data-ng-if="jnsInfo.ownerAddress.toLowerCase() != offerInfo.buyer.toLowerCase()">
 								<input type="button" class="btn btn-primary" ng-click="makeOffer(jnsInfo.tokenId)" value="发起邀约"></input>
@@ -125,16 +151,16 @@
 				<p><img width="256px" src="images/arbitrator.png"></img></p>
 			</span>
 
-			<hr />
 		</div>
 
 
+		<hr />
 	</div>
 
-	<div style="text-align:center; margin-top: 30px;">
+	<div style="display:block; text-align:center;">
 		<h4>
 			<p>区块链网络访问状态：{{status || "检测中..."}}</p>
-			<p><a href="https://jscan.jnsdao.com/#/block/{{blockNum}}">最新区块高度: {{blockHeight || "读取中..."}}</a></p>
+			<p><a href="https://jscan.jnsdao.com/#/block/{{blockHeight}}">最新区块高度: {{blockHeight || "读取中..."}}</a></p>
 		</h4>
 	</div>
 

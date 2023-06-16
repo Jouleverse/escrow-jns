@@ -27,7 +27,7 @@ angular.module('EscrowJNS')
 							const makeOffer_call = escrow_contract.methods.create(DEFAULT_ARBITRATOR, JNS_CONTRACT_ADDRESS, jns_token_id, _message);
 							makeOffer_call.estimateGas({from: connectedAccount}).then((gas) => {
 								console.log(gas);
-								dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
+								dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认…… 确认后请耐心等待上链操作完成…… 上链成功后请刷新页面……');
 								makeOffer_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 									.then(handlerShowRct(DIALOG_TITLE))
 									.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -58,7 +58,7 @@ angular.module('EscrowJNS')
 						const abortOffer_call = escrow_contract.methods.abort();
 						abortOffer_call.estimateGas({from: connectedAccount}).then((gas) => {
 							console.log(gas);
-							dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
+							dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认…… 确认后请耐心等待上链操作完成…… 上链成功后请刷新页面……');
 							abortOffer_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 								.then(handlerShowRct(DIALOG_TITLE))
 								.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -90,7 +90,7 @@ angular.module('EscrowJNS')
 							const approve_call = jns_contract.methods.approve(ESCROW_CONTRACT_ADDRESS, jns_token_id);
 							approve_call.estimateGas({from: connectedAccount}).then((gas) => {
 								console.log(gas);
-								dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
+								dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认…… 确认后请耐心等待上链操作完成…… 上链成功后请刷新页面……');
 								approve_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 									.then(handlerShowRct(DIALOG_TITLE))
 									.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -122,7 +122,8 @@ angular.module('EscrowJNS')
 						const acceptOffer_call = escrow_contract.methods.accept(offerInfo.buyer);
 						acceptOffer_call.estimateGas({from: connectedAccount}).then((gas) => {
 							console.log(gas);
-							dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
+							dialogShowTxt(DIALOG_TITLE, '⚠️警告：一旦上链，接受邀约，你的资产将被锁入智能合约！⚠️ ' + 
+								'上链请求提交中…… 请留意web3钱包的弹出确认…… 确认后请耐心等待上链操作完成…… 上链成功后请刷新页面……');
 							acceptOffer_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 								.then(handlerShowRct(DIALOG_TITLE))
 								.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -152,7 +153,8 @@ angular.module('EscrowJNS')
 						const confirmOffer_call = escrow_contract.methods.confirm(offerInfo.buyer);
 						confirmOffer_call.estimateGas({from: connectedAccount}).then((gas) => {
 							console.log(gas);
-							dialogShowTxt(DIALOG_TITLE, '上链请求提交中…… 请留意web3钱包的弹出确认。');
+							dialogShowTxt(DIALOG_TITLE, '⚠️警告：一旦上链，接受邀约，你的资产将被被转给对方，且无法追回！⚠️ ' + 
+								'上链请求提交中…… 请留意web3钱包的弹出确认…… 确认后请耐心等待上链操作完成…… 上链成功后请刷新页面……');
 							confirmOffer_call.send({from: connectedAccount}, handlerShowTx(DIALOG_TITLE))
 								.then(handlerShowRct(DIALOG_TITLE))
 								.catch((err) => { dialogShowTxt(DIALOG_TITLE, '错误：' + err) })
@@ -230,19 +232,29 @@ angular.module('EscrowJNS')
 						web3.setProvider(window.ethereum);
 						const connectedAccount = window.ethereum.selectedAddress;
 
-						const escrow_contract = new web3.eth.Contract(ESCROW_ABI, ESCROW_CONTRACT_ADDRESS);
-						$scope.offerInfo = await escrow_contract.methods.transactions(connectedAccount).call();
+						//如果没有连接钱包
+						if (connectedAccount == undefined) {
+							$scope.offerInfo = {
+								seller: $scope.ZERO_ADDRESS,
+								buyer: $scope.ZERO_ADDRESS,
+								arbitrator: $scope.ZERO_ADDRESS,
+							}
+						} else {
+							// 如果已经连接了钱包
+							const escrow_contract = new web3.eth.Contract(ESCROW_ABI, ESCROW_CONTRACT_ADDRESS);
+							$scope.offerInfo = await escrow_contract.methods.transactions(connectedAccount).call();
 
-						if ($scope.offerInfo.state == 0 && $scope.jnsInfo.ownerAddress != ESCROW_CONTRACT_ADDRESS) {
-							$scope.offerInfo.seller = $scope.jnsInfo.ownerAddress;
-							$scope.offerInfo.buyer = connectedAccount;
+							if ($scope.offerInfo.state == 0 && $scope.jnsInfo.ownerAddress != ESCROW_CONTRACT_ADDRESS) {
+								$scope.offerInfo.seller = $scope.jnsInfo.ownerAddress;
+								$scope.offerInfo.buyer = connectedAccount;
+							}
+
+							/*if ($scope.offerInfo.buyer.toLowerCase() == connectedAccount.toLowerCase()) {
+								$scope.offerInfo.buyerName = '我';
+							}*/
+
+							console.log($scope.offerInfo);
 						}
-
-						/*if ($scope.offerInfo.buyer.toLowerCase() == connectedAccount.toLowerCase()) {
-							$scope.offerInfo.buyerName = '我';
-						}*/
-
-						console.log($scope.offerInfo);
 
 					} else { // no web3 env
 						$scope.offerInfo = {

@@ -86,16 +86,15 @@
 					if (__accounts.length > 0) { // 有账户
 						var addr = __accounts[0];
 						$("#connAddr")[0].innerHTML = addr.substr(0,6) + '...' + addr.substr(-4);
-						$("#connLink").attr('onclick', '');
-						$("#connLink").attr('href', '/address/' + addr);
 
 						getAddressJNS(addr, function (jns_info) {
 							if (jns_info) {
 								$("#connAddr")[0].innerHTML = '<img height="14px" src="' + jns_info.image + '" />';
-								$("#connLink").attr('onclick', '');
-								$("#connLink").attr('href', '/did/' + jns_info.description); // "description" is a legacy naming... sorry.
 							} 
 						});
+
+						$("#connLink").attr('onclick', '');
+						$("#connLink").attr('href', '/offer/' + addr);
 
 					} else { // 没有账户
 						$("#connAddr")[0].innerHTML = '连接账户';
@@ -289,9 +288,7 @@
 
 
 		// for search box...
-        function processRequest() {
-             var requestStr = $("#query")[0].value.split('0x').join('');
-
+		function processRequestCommon(requestStr) {
             if (requestStr.length === 40) // if address?
               return goToAddrInfos('0x'+requestStr)
 			else if (requestStr.toLowerCase().match(/\.j$/)) // if jns?
@@ -302,6 +299,16 @@
 				'<li>链地址：如 0x3D86Dd50C2f333d3d79Da2DE6bCd5706adD7a20c</li>' + 
 				'<li>JNS名字：如 love.j</li>' +
 				'</ul>')
+		}
+
+        function processRequest() {
+			var requestStr = $("#query")[0].value.split('0x').join('');
+			processRequestCommon(requestStr);
+        };
+
+        function processRequest2() {
+			var requestStr = $("#query2")[0].value.split('0x').join('');
+			processRequestCommon(requestStr);
         };
 
         function goToJNSInfo(requestStr) {
@@ -331,7 +338,7 @@
             <ul class="nav navbar-nav">
             <form  name="search_form" onsubmit="processRequest()"  class="navbar-form navbar-right">
             <div class="form-group">
-            <input type="text" placeholder="JNS域名/用户地址" name="requestType" required  id="query"  class="form-control"><br>
+            <input type="text" placeholder="JNS域名/邀约人地址" name="requestType" required  id="query"  class="form-control"><br>
             </div>
             <button type="submit" class="btn btn-success">搜索</button></form>
             </ul>
